@@ -1,0 +1,5 @@
+luausb {
+	global: luaopen_luausb;
+	local: *;
+};
+
