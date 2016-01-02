@@ -1,6 +1,11 @@
 cmake_minimum_required (VERSION 3.1.0)
 project (luausb)
 
+# Include libusb
+
+include_directories(dependencies/libusb/libusb)
+add_subdirectory(dependencies/libusb)
+
 # Include Lua 5.1
 
 include(FindLua51)

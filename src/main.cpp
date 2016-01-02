@@ -30,12 +30,89 @@
 */
 
 #include "common.hpp"
+#include "init_classes.hpp"
 
-namespace luausb {
-	int init(State & state){
+using namespace luausb;
+
+namespace luausb{
+	int getErrorName(State & state){
+		Stack * stack = state.stack;
+		if (stack->is<LUA_TNUMBER>(1)){
+			const char * text = libusb_error_name(stack->to<int>(1));
+			stack->push<const std::string &>(text);
+			return 1;
+		}
+		else{
+			return 0;
+		}
+	}
+
+	int getStrError(State & state){
+		Stack * stack = state.stack;
+		if (stack->is<LUA_TNUMBER>(1)){
+			const char * text = libusb_strerror(static_cast<libusb_error>(stack->to<int>(1)));
+			stack->push<const std::string &>(text);
+			return 1;
+		}
+		else{
+			return 0;
+		}
+	}
+
+	int hasCapability(State & state){
+		Stack * stack = state.stack;
+		if (stack->is<LUA_TNUMBER>(1)){
+			stack->push<bool>(libusb_has_capability(stack->to<int>(1)));
+			return 1;
+		}
 		return 0;
 	}
-};
+
+	int getVersion(State & state){
+		Stack * stack = state.stack;
+		const libusb_version * version = libusb_get_version();
+		stack->newTable();
+		{
+			stack->setField<int>("major", version->major);
+			stack->setField<int>("minor", version->minor);
+			stack->setField<int>("micro", version->micro);
+			stack->setField<int>("nano", version->nano);
+			stack->setField<const std::string &>("rc", version->rc);
+			stack->setField<const std::string &>("describe", version->describe);
+		}
+		
+		return 1;
+	}
+
+	int setLocale(State & state){
+		Stack * stack = state.stack;
+		if (stack->is<LUA_TSTRING>(1)){
+			const std::string localeName = stack->to<const std::string>(1);
+			int result = 0;
+			if ((result = libusb_setlocale(localeName.c_str())) == LIBUSB_SUCCESS){
+				stack->push<bool>(true);
+			}
+			else{
+				stack->push<int>(result);
+			}
+			return 1;
+		}
+		return 0;
+	}
+
+	int getSupportedLocales(State & state){
+		const char * usbi_locale_supported[] = { "en", "nl", "fr", "ru" };
+		Stack * stack = state.stack;
+		stack->newTable();
+		size_t elements = (sizeof(usbi_locale_supported) / sizeof(usbi_locale_supported[0]));
+		for (size_t i = 0; i < elements; i++){
+			stack->push<int>(i+1);
+			stack->push<const std::string &>(usbi_locale_supported[i]);
+			stack->setTable();
+		}
+		return 1;
+	}
+}
 
 extern "C" LUAUSB_DLL_EXPORTED int luaopen_luausb(lua_State * L){
 	State * state = new State(L);
@@ -43,8 +120,33 @@ extern "C" LUAUSB_DLL_EXPORTED int luaopen_luausb(lua_State * L){
 	Module luausb_module;
 
 	stack->newTable();
-	
-	luausb_module["init"] = luausb::init;
+
+	initConstants(state, luausb_module);
+	initContext(state, luausb_module);
+	initDevice(state, luausb_module);
+	initDeviceHandle(state, luausb_module);
+	initInterface(state, luausb_module);
+	initTransfer(state, luausb_module);
+
+	initBosDescriptor(state, luausb_module);
+	initBosDevCapabilityDescriptor(state, luausb_module);
+	initConfigDescriptor(state, luausb_module);
+	initContainerIDDescriptor(state, luausb_module);
+	initControlSetup(state, luausb_module);
+	initDeviceDescriptor(state, luausb_module);
+	initEndpointDescriptor(state, luausb_module);
+	initInterfaceDescriptor(state, luausb_module);
+	initISOPacketDescriptor(state, luausb_module);
+	initUSB20ExtensionDescriptor(state, luausb_module);
+	initSSUSBDeviceCapabilityDescriptor(state, luausb_module);
+	initSSEndpointCompanionDescriptor(state, luausb_module);
+
+	luausb_module["getErrorString"] = getErrorName;
+	luausb_module["getStrError"] = getStrError;
+	luausb_module["getVersion"] = getVersion;
+	luausb_module["hasCapability"] = hasCapability;
+	luausb_module["setLocale"] = setLocale;
+	luausb_module["getSupportedLocales"] = getSupportedLocales;
 
 	state->registerLib(luausb_module);
 	return 1;

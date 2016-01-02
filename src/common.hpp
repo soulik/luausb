@@ -29,6 +29,9 @@
 
 */
 
+#ifndef LUA_USB_COMMON_H
+#define LUA_USB_COMMON_H
+
 #include <lutok2/lutok2.hpp>
 using namespace lutok2;
 
@@ -42,3 +45,9 @@ using namespace lutok2;
 #define LUAUSB_DLL_EXPORTED
 #endif
 
+#define INIT_OBJECT(OBJ_NAME) state->registerInterface<OBJ_NAME>("luausb_" #OBJ_NAME); state->stack->setField(#OBJ_NAME)
+#define OBJECT_IFACE(OBJ_NAME) state.getInterface<OBJ_NAME>("luausb_" #OBJ_NAME)
+
+#include <libusb.h>
+
+#endif
