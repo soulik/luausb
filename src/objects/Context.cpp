@@ -1,5 +1,6 @@
 #include "objects/Context.hpp"
 #include "objects/Device.hpp"
+#include "objects/DeviceHandle.hpp"
 
 namespace luausb {
 	libusb_context * Context::constructor(State & state, bool & managed){
@@ -39,6 +40,23 @@ namespace luausb {
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1)){
 			libusb_set_debug(context, stack->to<int>(1));
+		}
+		return 0;
+	}
+
+	int Context::open(State & state, libusb_context * context){
+		Stack * stack = state.stack;
+		if (stack->is<LUA_TNUMBER>(1) && stack->is<LUA_TNUMBER>(2)){
+			libusb_device_handle * handle = libusb_open_device_with_vid_pid(context, stack->to<int>(1), stack->to<int>(2));
+			if (handle){
+				DeviceHandle * iDevHandle = OBJECT_IFACE(DeviceHandle);
+				iDevHandle->push(handle, true);
+				return 1;
+			}
+			else{
+				stack->push<bool>(false);
+				return 1;
+			}
 		}
 		return 0;
 	}

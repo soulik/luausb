@@ -18,6 +18,7 @@ namespace luausb {
 			LUTOK_PROPERTY("IDProduct", &DeviceDescriptor::getIDProduct, &DeviceDescriptor::nullMethod);
 			LUTOK_PROPERTY("BCDDevice", &DeviceDescriptor::getBCDDevice, &DeviceDescriptor::nullMethod);
 			LUTOK_PROPERTY("manufacturer", &DeviceDescriptor::getManufacturer, &DeviceDescriptor::nullMethod);
+			LUTOK_PROPERTY("product", &DeviceDescriptor::getProduct, &DeviceDescriptor::nullMethod);
 			LUTOK_PROPERTY("serialNumber", &DeviceDescriptor::getSerialNumber, &DeviceDescriptor::nullMethod);
 			LUTOK_PROPERTY("numConfigurations", &DeviceDescriptor::getNumConfigurations, &DeviceDescriptor::nullMethod);
 		}
@@ -37,6 +38,7 @@ namespace luausb {
 		int getIDProduct(State & state, libusb_device_descriptor * descriptor);
 		int getBCDDevice(State & state, libusb_device_descriptor * descriptor);
 		int getManufacturer(State & state, libusb_device_descriptor * descriptor);
+		int getProduct(State & state, libusb_device_descriptor * descriptor);
 		int getSerialNumber(State & state, libusb_device_descriptor * descriptor);
 		int getNumConfigurations(State & state, libusb_device_descriptor * descriptor);
 	};

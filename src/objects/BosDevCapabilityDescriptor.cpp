@@ -45,13 +45,16 @@ namespace luausb {
 		libusb_context * context = iContext->get(1);
 		libusb_usb_2_0_extension_descriptor * descriptor2 = nullptr;
 		USB20ExtensionDescriptor * iDesc = OBJECT_IFACE(USB20ExtensionDescriptor);
-		
-		if (libusb_get_usb_2_0_extension_descriptor(context, descriptor, &descriptor2) == 0){
+		int result = 0;
+		if ((result = libusb_get_usb_2_0_extension_descriptor(context, descriptor, &descriptor2)) == LIBUSB_SUCCESS){
 			iDesc->push(descriptor2, true);
+			return 1;
 		} else{
 			stack->push<bool>(false);
+			stack->push<int>(result);
+			return 2;
 		}
-		return 1;
+		
 	}
 
 	int BosDevCapabilityDescriptor::getSSUSBDeviceCapabilityDescriptor(State & state, libusb_bos_dev_capability_descriptor * descriptor){
@@ -60,13 +63,15 @@ namespace luausb {
 		libusb_context * context = iContext->get(1);
 		libusb_ss_usb_device_capability_descriptor * descriptor2 = nullptr;
 		SSUSBDeviceCapabilityDescriptor * iDesc = OBJECT_IFACE(SSUSBDeviceCapabilityDescriptor);
-
-		if (libusb_get_ss_usb_device_capability_descriptor(context, descriptor, &descriptor2) == 0){
+		int result = 0;
+		if ((result = libusb_get_ss_usb_device_capability_descriptor(context, descriptor, &descriptor2)) == LIBUSB_SUCCESS){
 			iDesc->push(descriptor2, true);
+			return 1;
 		} else {
 			stack->push<bool>(false);
+			stack->push<int>(result);
+			return 2;
 		}
-		return 1;
 	}
 
 	int BosDevCapabilityDescriptor::getContainerIDDescriptor(State & state, libusb_bos_dev_capability_descriptor * descriptor){
@@ -75,14 +80,16 @@ namespace luausb {
 		libusb_context * context = iContext->get(1);
 		libusb_container_id_descriptor * descriptor2 = nullptr;
 		ContainerIDDescriptor * iDesc = OBJECT_IFACE(ContainerIDDescriptor);
-
-		if (libusb_get_container_id_descriptor(context, descriptor, &descriptor2) == 0){
+		int result = 0;
+		if ((result = libusb_get_container_id_descriptor(context, descriptor, &descriptor2)) == LIBUSB_SUCCESS){
 			iDesc->push(descriptor2, true);
+			return 1;
 		}
 		else {
 			stack->push<bool>(false);
+			stack->push<int>(result);
+			return 2;
 		}
-		return 1;
 	}
 
 	void initBosDevCapabilityDescriptor(State * state, Module & module){

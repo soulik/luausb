@@ -16,13 +16,16 @@ namespace luausb {
 		Stack * stack = state.stack;
 		ConfigDescriptor * iConfDesc = OBJECT_IFACE(ConfigDescriptor);
 		libusb_config_descriptor * config = nullptr;
-		if (libusb_get_active_config_descriptor(object, &config) == 0){
+		int result = 0;
+		if ((result = libusb_get_active_config_descriptor(object, &config)) == LIBUSB_SUCCESS){
 			iConfDesc->push(config, true);
+			return 1;
 		}
 		else{
 			stack->push<bool>(false);
+			stack->push<bool>(result);
+			return 2;
 		}
-		return 1;
 	}
 
 	int Device::getConfigDescriptors(State & state, libusb_device * object){
@@ -51,9 +54,16 @@ namespace luausb {
 		Stack * stack = state.stack;
 		DeviceDescriptor * iDevDesc = OBJECT_IFACE(DeviceDescriptor);
 		libusb_device_descriptor * descriptor = new libusb_device_descriptor;
-		libusb_get_device_descriptor(object, descriptor);
-		iDevDesc->push(descriptor, true);
-		return 1;
+		int result = 0;
+		if ((result = libusb_get_device_descriptor(object, descriptor)) == LIBUSB_SUCCESS){
+			iDevDesc->push(descriptor, true);
+			return 1;
+		}
+		else{
+			stack->push<bool>(false);
+			stack->push<bool>(result);
+			return 2;
+		}
 	}
 
 	int Device::getDeviceSpeed(State & state, libusb_device * object){
@@ -98,13 +108,16 @@ namespace luausb {
 		if (stack->is<LUA_TNUMBER>(1)){
 			ConfigDescriptor * iConfDesc = OBJECT_IFACE(ConfigDescriptor);
 			libusb_config_descriptor * descriptor = nullptr;
-			if (libusb_get_config_descriptor(object, stack->to<int>(1), &descriptor) == 0){
+			int result = 0;
+			if ((result = libusb_get_config_descriptor(object, stack->to<int>(1), &descriptor)) == LIBUSB_SUCCESS){
 				iConfDesc->push(descriptor, true);
+				return 1;
 			}
 			else{
 				stack->push<bool>(false);
+				stack->push<bool>(result);
+				return 2;
 			}
-			return 1;
 		}
 		return 0;
 	}
@@ -114,13 +127,16 @@ namespace luausb {
 		if (stack->is<LUA_TNUMBER>(1)){
 			ConfigDescriptor * iConfDesc = OBJECT_IFACE(ConfigDescriptor);
 			libusb_config_descriptor * descriptor = nullptr;
-			if (libusb_get_config_descriptor_by_value(object, stack->to<int>(1), &descriptor) == 0){
+			int result = 0;
+			if ((result = libusb_get_config_descriptor_by_value(object, stack->to<int>(1), &descriptor)) == LIBUSB_SUCCESS){
 				iConfDesc->push(descriptor, true);
+				return 1;
 			}
 			else{
 				stack->push<bool>(false);
+				stack->push<bool>(result);
+				return 2;
 			}
-			return 1;
 		}
 		return 0;
 	}
@@ -154,11 +170,13 @@ namespace luausb {
 			int result = libusb_get_max_packet_size(object, stack->to<int>(1));
 			if ((result != LIBUSB_ERROR_NOT_FOUND) && (result != LIBUSB_ERROR_OTHER)){
 				stack->push<int>(result);
+				return 1;
 			}
 			else{
 				stack->push<bool>(false);
+				stack->push<bool>(result);
+				return 2;
 			}
-			return 1;
 		}
 		return 0;
 	}
@@ -169,11 +187,13 @@ namespace luausb {
 			int result = libusb_get_max_iso_packet_size(object, stack->to<int>(1));
 			if ((result != LIBUSB_ERROR_NOT_FOUND) && (result != LIBUSB_ERROR_OTHER)){
 				stack->push<int>(result);
+				return 1;
 			}
 			else{
 				stack->push<bool>(false);
-			}
-			return 1;
+				stack->push<bool>(result);
+				return 2;
+			}	
 		}
 		return 0;
 	}
@@ -182,13 +202,14 @@ namespace luausb {
 		Stack * stack = state.stack;
 		libusb_device_handle * handle = nullptr;
 		int result = 0;
-		if ((result = libusb_open(object, &handle)) == 0){
+		if ((result = libusb_open(object, &handle)) == LIBUSB_SUCCESS){
 			DeviceHandle * iDevHandle = OBJECT_IFACE(DeviceHandle);
-			iDevHandle->push(handle);
+			iDevHandle->push(handle, true);
 			return 1;
 		} else {
+			stack->push<bool>(false);
 			stack->push<int>(result);
-			return 1;
+			return 2;
 		}
 	}
 

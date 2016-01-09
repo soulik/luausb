@@ -9,6 +9,7 @@ namespace luausb {
 		explicit Context(State * state) : Object<libusb_context>(state){
 			LUTOK_PROPERTY("devices", &Context::getDeviceList, &Context::nullMethod);
 			LUTOK_PROPERTY("debug", &Context::nullMethod, &Context::setDebug);
+			LUTOK_METHOD("open", &Context::open);
 		}
 
 		libusb_context * constructor(State & state, bool & managed);
@@ -17,6 +18,8 @@ namespace luausb {
 
 		int getDeviceList(State & state, libusb_context * context);
 		int setDebug(State & state, libusb_context * context);
+
+		int open(State & state, libusb_context * context);
 	};
 };
 

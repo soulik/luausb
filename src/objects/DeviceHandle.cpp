@@ -17,7 +17,6 @@ namespace luausb {
 		libusb_device * device = libusb_get_device(handle);
 		if (device){
 			iDev->push(device);
-			
 		}
 		else{
 			stack->pushNil();
@@ -49,26 +48,31 @@ namespace luausb {
 		Stack * stack = state.stack;
 		BosDescriptor * iBOSDesc = OBJECT_IFACE(BosDescriptor);
 		libusb_bos_descriptor * BOSDesc = nullptr;
-		if (libusb_get_bos_descriptor(handle, &BOSDesc) == 0){
+		int result = 0;
+		if ((result = libusb_get_bos_descriptor(handle, &BOSDesc)) == LIBUSB_SUCCESS){
 			iBOSDesc->push(BOSDesc, true);
+			return 1;
 		}
 		else{
 			stack->push<bool>(false);
+			stack->push<int>(result);
+			return 2;
 		}
-		return 1;
 	}
 
 	int DeviceHandle::claimInterface(State & state, libusb_device_handle * handle){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1)){
 			int result = 0;
-			if ((result = libusb_claim_interface(handle, stack->to<int>(1))) == 0){
+			if ((result = libusb_claim_interface(handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
+				return 1;
 			}
 			else{
+				stack->push<bool>(false);
 				stack->push<int>(result);
-			}
-			return 1;
+				return 2;
+			}	
 		}
 		return 0;
 	}
@@ -77,13 +81,16 @@ namespace luausb {
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1)){
 			int result = 0;
-			if ((result = libusb_release_interface(handle, stack->to<int>(1))) == 0){
+			if ((result = libusb_release_interface(handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
+				return 1;
 			}
 			else{
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-			return 1;
+
 		}
 		return 0;
 	}
@@ -92,13 +99,15 @@ namespace luausb {
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1) && stack->is<LUA_TNUMBER>(2)){
 			int result = 0;
-			if ((result = libusb_set_interface_alt_setting(handle, stack->to<int>(1), stack->to<int>(2))) == 0){
+			if ((result = libusb_set_interface_alt_setting(handle, stack->to<int>(1), stack->to<int>(2))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
+				return 1;
 			}
 			else{
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-			return 1;
 		}
 		return 0;
 	}
@@ -108,13 +117,15 @@ namespace luausb {
 		int result = 0;
 		if (stack->is<LUA_TNUMBER>(1)){
 			int result = 0;
-			if ((result = libusb_clear_halt(handle, stack->to<int>(1))) == 0){
+			if ((result = libusb_clear_halt(handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
+				return 1;
 			}
 			else{
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-			return 1;
 		}
 		return 0;
 	}
@@ -122,13 +133,15 @@ namespace luausb {
 	int DeviceHandle::resetDevice(State & state, libusb_device_handle * handle){
 		Stack * stack = state.stack;
 		int result = 0;
-		if ((result = libusb_reset_device(handle)) == 0){
+		if ((result = libusb_reset_device(handle)) == LIBUSB_SUCCESS){
 			stack->push<bool>(true);
+			return 1;
 		}
 		else{
+			stack->push<bool>(false);
 			stack->push<int>(result);
+			return 2;
 		}
-		return 1;
 	}
 
 	int DeviceHandle::kernelDriverActive(State & state, libusb_device_handle * handle){
@@ -136,13 +149,15 @@ namespace luausb {
 		int result = 0;
 		if (stack->is<LUA_TNUMBER>(1)){
 			int result = 0;
-			if ((result = libusb_kernel_driver_active(handle, stack->to<int>(1))) == 0){
+			if ((result = libusb_kernel_driver_active(handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
+				return 1;
 			}
 			else{
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-			return 1;
 		}
 		return 0;
 	}
@@ -153,11 +168,13 @@ namespace luausb {
 			int result = libusb_detach_kernel_driver(handle, stack->to<int>(1));
 			if ((result >= 0) && (result <= 1)){
 				stack->push<bool>(result == 1);
+				return 1;
 			}
 			else{
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-			return 1;
 		}
 		return 0;
 	}
@@ -166,13 +183,15 @@ namespace luausb {
 		int result = 0;
 		if (stack->is<LUA_TNUMBER>(1)){
 			int result = 0;
-			if ((result = libusb_attach_kernel_driver(handle, stack->to<int>(1))) == 0){
+			if ((result = libusb_attach_kernel_driver(handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
+				return 1;
 			}
 			else{
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-			return 1;
 		}
 		return 0;
 	}
@@ -197,13 +216,15 @@ namespace luausb {
 			int result = libusb_get_descriptor(handle, stack->to<int>(1), stack->to<int>(2), reinterpret_cast<unsigned char*>(descriptor), length);
 			if (result >= 0){
 				stack->pushLString(descriptor, result);
+				delete[] descriptor;
+				return 1;
 			}
 			else{
+				delete[] descriptor;
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-
-			delete[] descriptor;
-			return 1;
 		}
 		return 0;
 	}
@@ -220,13 +241,15 @@ namespace luausb {
 			int result = libusb_get_string_descriptor(handle, stack->to<int>(1), stack->to<int>(2), reinterpret_cast<unsigned char*>(descriptor), length);
 			if (result >= 0){
 				stack->pushLString(descriptor, result);
+				delete[] descriptor;
+				return 1;
 			}
 			else{
+				delete[] descriptor;
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-
-			delete[] descriptor;
-			return 1;
 		}
 		return 0;
 	}
@@ -243,13 +266,15 @@ namespace luausb {
 			int result = libusb_get_string_descriptor_ascii(handle, stack->to<int>(1), reinterpret_cast<unsigned char*>(descriptor), length);
 			if (result >= 0){
 				stack->pushLString(descriptor, result);
+				delete[] descriptor;
+				return 1;
 			}
 			else{
+				delete[] descriptor;
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-
-			delete[] descriptor;
-			return 1;
 		}
 		return 0;
 	}
@@ -271,13 +296,15 @@ namespace luausb {
 				data.length(),
 				timeout
 				);
-			if (result == 0){
+			if (result >= 0){
 				stack->push<bool>(true);
+				return 1;
 			}
 			else{
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-			return 1;
 		}
 		return 0;
 	}
@@ -297,13 +324,15 @@ namespace luausb {
 				&transfered,
 				timeout
 				);
-			if (result == 0){
+			if (result >= 0){
 				stack->push<int>(transfered);
+				return 1;
 			}
 			else{
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-			return 1;
 		}
 		return 0;
 	}
@@ -323,13 +352,15 @@ namespace luausb {
 				&transfered,
 				timeout
 				);
-			if (result == 0){
+			if (result >= 0){
 				stack->push<int>(transfered);
+				return 1;
 			}
 			else{
+				stack->push<bool>(false);
 				stack->push<int>(result);
+				return 2;
 			}
-			return 1;
 		}
 		return 0;
 	}

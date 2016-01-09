@@ -91,11 +91,13 @@ namespace luausb{
 			int result = 0;
 			if ((result = libusb_setlocale(localeName.c_str())) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
+				return 1;
 			}
 			else{
+				stack->push<bool>(false);
 				stack->push<int>(result);
-			}
-			return 1;
+				return 2;
+			}	
 		}
 		return 0;
 	}

@@ -66,13 +66,16 @@ namespace luausb {
 		libusb_ss_endpoint_companion_descriptor * descriptor2 = nullptr;
 		SSEndpointCompanionDescriptor * iDesc = OBJECT_IFACE(SSEndpointCompanionDescriptor);
 
-		if (libusb_get_ss_endpoint_companion_descriptor(context, descriptor, &descriptor2) == 0){
+		int result = 0;
+		if ((result = libusb_get_ss_endpoint_companion_descriptor(context, descriptor, &descriptor2)) == LIBUSB_SUCCESS){
 			iDesc->push(descriptor2, true);
+			return 1;
 		}
 		else {
 			stack->push<bool>(false);
+			stack->push<int>(result);
+			return 2;
 		}
-		return 1;
 	}
 
 	void initEndpointDescriptor(State * state, Module & module){

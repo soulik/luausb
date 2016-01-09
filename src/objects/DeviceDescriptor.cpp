@@ -64,6 +64,11 @@ namespace luausb {
 		stack->push<int>(descriptor->iManufacturer);
 		return 1;
 	}
+	int DeviceDescriptor::getProduct(State & state, libusb_device_descriptor * descriptor){
+		Stack * stack = state.stack;
+		stack->push<int>(descriptor->iProduct);
+		return 1;
+	}
 	int DeviceDescriptor::getSerialNumber(State & state, libusb_device_descriptor * descriptor){
 		Stack * stack = state.stack;
 		stack->push<int>(descriptor->iSerialNumber);
