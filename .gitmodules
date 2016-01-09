@@ -3,4 +3,4 @@
 	url = https://github.com/soulik/lutok2.git
 [submodule "dependencies/libusb"]
 	path = dependencies/libusb
-	url = https://github.com/libusb/libusb.git
+url=https://github.com/soulik/libusb
