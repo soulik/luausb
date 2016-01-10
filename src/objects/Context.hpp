@@ -4,22 +4,26 @@
 #include "common.hpp"
 
 namespace luausb {
-	class Context : public Object<libusb_context> {
+	struct Context_wrapper {
+		libusb_context * context;
+	};
+
+	class Context : public Object<Context_wrapper> {
 	public:
-		explicit Context(State * state) : Object<libusb_context>(state){
+		explicit Context(State * state) : Object<Context_wrapper>(state){
 			LUTOK_PROPERTY("devices", &Context::getDeviceList, &Context::nullMethod);
 			LUTOK_PROPERTY("debug", &Context::nullMethod, &Context::setDebug);
 			LUTOK_METHOD("open", &Context::open);
 		}
 
-		libusb_context * constructor(State & state, bool & managed);
+		Context_wrapper * constructor(State & state, bool & managed);
 
-		void destructor(State & state, libusb_context * context);
+		void destructor(State & state, Context_wrapper * wrapper);
 
-		int getDeviceList(State & state, libusb_context * context);
-		int setDebug(State & state, libusb_context * context);
+		int getDeviceList(State & state, Context_wrapper * wrapper);
+		int setDebug(State & state, Context_wrapper * wrapper);
 
-		int open(State & state, libusb_context * context);
+		int open(State & state, Context_wrapper * wrapper);
 	};
 };
 

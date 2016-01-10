@@ -3,23 +3,24 @@
 #include "objects/DeviceHandle.hpp"
 
 namespace luausb {
-	libusb_context * Context::constructor(State & state, bool & managed){
-		libusb_context * _context = nullptr;
-		libusb_init(&_context);
-		return _context;
+	Context_wrapper * Context::constructor(State & state, bool & managed){
+		Context_wrapper * wrapper = new Context_wrapper;
+		libusb_init(&wrapper->context);
+		return wrapper;
 	}
 
-	void Context::destructor(State & state, libusb_context * context){
-		libusb_exit(context);
+	void Context::destructor(State & state, Context_wrapper * wrapper){
+		libusb_exit(wrapper->context);
+		delete wrapper;
 	}
 
-	int Context::getDeviceList(State & state, libusb_context * context){
+	int Context::getDeviceList(State & state, Context_wrapper * wrapper){
 		Stack * stack = state.stack;
 		Device * iDevice = OBJECT_IFACE(Device);
 
 		libusb_device ** devices = nullptr;
 
-		size_t count = libusb_get_device_list(context, &devices);
+		size_t count = libusb_get_device_list(wrapper->context, &devices);
 		
 		stack->newTable();
 
@@ -36,18 +37,18 @@ namespace luausb {
 		return 1;
 	}
 
-	int Context::setDebug(State & state, libusb_context * context){
+	int Context::setDebug(State & state, Context_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1)){
-			libusb_set_debug(context, stack->to<int>(1));
+			libusb_set_debug(wrapper->context, stack->to<int>(1));
 		}
 		return 0;
 	}
 
-	int Context::open(State & state, libusb_context * context){
+	int Context::open(State & state, Context_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1) && stack->is<LUA_TNUMBER>(2)){
-			libusb_device_handle * handle = libusb_open_device_with_vid_pid(context, stack->to<int>(1), stack->to<int>(2));
+			libusb_device_handle * handle = libusb_open_device_with_vid_pid(wrapper->context, stack->to<int>(1), stack->to<int>(2));
 			if (handle){
 				DeviceHandle * iDevHandle = OBJECT_IFACE(DeviceHandle);
 				iDevHandle->push(handle, true);

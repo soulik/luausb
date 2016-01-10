@@ -62,7 +62,8 @@ namespace luausb {
 	int EndpointDescriptor::getSSCompanionDescriptor(State & state, libusb_endpoint_descriptor * descriptor){
 		Stack * stack = state.stack;
 		Context * iContext = OBJECT_IFACE(Context);
-		libusb_context * context = iContext->get(1);
+		Context_wrapper * wrapper = iContext->get(1);
+		libusb_context * context = wrapper->context;
 		libusb_ss_endpoint_companion_descriptor * descriptor2 = nullptr;
 		SSEndpointCompanionDescriptor * iDesc = OBJECT_IFACE(SSEndpointCompanionDescriptor);
 

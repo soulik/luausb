@@ -42,7 +42,8 @@ namespace luausb {
 	int BosDevCapabilityDescriptor::getUSB2ExtensionDescriptor(State & state, libusb_bos_dev_capability_descriptor * descriptor){
 		Stack * stack = state.stack;
 		Context * iContext = OBJECT_IFACE(Context);
-		libusb_context * context = iContext->get(1);
+		Context_wrapper * wrapper = iContext->get(1);
+		libusb_context * context = wrapper->context;
 		libusb_usb_2_0_extension_descriptor * descriptor2 = nullptr;
 		USB20ExtensionDescriptor * iDesc = OBJECT_IFACE(USB20ExtensionDescriptor);
 		int result = 0;
@@ -60,7 +61,8 @@ namespace luausb {
 	int BosDevCapabilityDescriptor::getSSUSBDeviceCapabilityDescriptor(State & state, libusb_bos_dev_capability_descriptor * descriptor){
 		Stack * stack = state.stack;
 		Context * iContext = OBJECT_IFACE(Context);
-		libusb_context * context = iContext->get(1);
+		Context_wrapper * wrapper = iContext->get(1);
+		libusb_context * context = wrapper->context;
 		libusb_ss_usb_device_capability_descriptor * descriptor2 = nullptr;
 		SSUSBDeviceCapabilityDescriptor * iDesc = OBJECT_IFACE(SSUSBDeviceCapabilityDescriptor);
 		int result = 0;
@@ -77,7 +79,9 @@ namespace luausb {
 	int BosDevCapabilityDescriptor::getContainerIDDescriptor(State & state, libusb_bos_dev_capability_descriptor * descriptor){
 		Stack * stack = state.stack;
 		Context * iContext = OBJECT_IFACE(Context);
-		libusb_context * context = iContext->get(1);
+		Context_wrapper * wrapper = iContext->get(1);
+		libusb_context * context = wrapper->context;
+
 		libusb_container_id_descriptor * descriptor2 = nullptr;
 		ContainerIDDescriptor * iDesc = OBJECT_IFACE(ContainerIDDescriptor);
 		int result = 0;
