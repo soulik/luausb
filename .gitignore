@@ -6,4 +6,5 @@
 *.so
 *.so.*
 build/*
-
+tests/*.txt
+tests/*.log
