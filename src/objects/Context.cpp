@@ -28,8 +28,11 @@ namespace luausb {
 		libusb_device * device = devices[i];
 
 		while ((device = devices[i++]) != nullptr){
+			Device_wrapper * wrapper = new Device_wrapper;
+			wrapper->device = device;
+			wrapper->managed = true;
 			stack->push<int>(i);
-			iDevice->push(device, true);
+			iDevice->push(wrapper, true);
 			stack->setTable();
 		}
 
@@ -51,7 +54,10 @@ namespace luausb {
 			libusb_device_handle * handle = libusb_open_device_with_vid_pid(wrapper->context, stack->to<int>(1), stack->to<int>(2));
 			if (handle){
 				DeviceHandle * iDevHandle = OBJECT_IFACE(DeviceHandle);
-				iDevHandle->push(handle, true);
+				DeviceHandle_wrapper * wrapper = new DeviceHandle_wrapper;
+				wrapper->handle = handle;
+				wrapper->managed = true;
+				iDevHandle->push(wrapper, true);
 				return 1;
 			}
 			else{

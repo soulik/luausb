@@ -3,20 +3,29 @@
 #include "objects/BosDescriptor.hpp"
 
 namespace luausb {
-	libusb_device_handle * DeviceHandle::constructor(State & state, bool & managed){
-		return nullptr;
+	DeviceHandle_wrapper * DeviceHandle::constructor(State & state, bool & managed){
+		DeviceHandle_wrapper * wrapper = new DeviceHandle_wrapper;
+		wrapper->managed = true;
+		return wrapper;
 	}
 
-	void DeviceHandle::destructor(State & state, libusb_device_handle * handle){
-		libusb_close(handle);
+	void DeviceHandle::destructor(State & state, DeviceHandle_wrapper * wrapper){
+		if (wrapper->managed){
+			libusb_close(wrapper->handle);
+		}
+		delete wrapper;
 	}
 
-	int DeviceHandle::getDevice(State & state, libusb_device_handle * handle){
+	int DeviceHandle::getDevice(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		Device * iDev = OBJECT_IFACE(Device);
-		libusb_device * device = libusb_get_device(handle);
+		libusb_device * device = libusb_get_device(wrapper->handle);
+
 		if (device){
-			iDev->push(device);
+			Device_wrapper * wrapper = new Device_wrapper;
+			wrapper->device = device;
+			wrapper->device = false;
+			iDev->push(wrapper, true);
 		}
 		else{
 			stack->pushNil();
@@ -24,10 +33,10 @@ namespace luausb {
 		return 1;
 	}
 
-	int DeviceHandle::getConfiguration(State & state, libusb_device_handle * handle){
+	int DeviceHandle::getConfiguration(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		int config = 0;
-		if (libusb_get_configuration(handle, &config) == 0){
+		if (libusb_get_configuration(wrapper->handle, &config) == 0){
 			stack->push<int>(config);
 		}
 		else{
@@ -36,20 +45,20 @@ namespace luausb {
 		return 1;
 	}
 
-	int DeviceHandle::setConfiguration(State & state, libusb_device_handle * handle){
+	int DeviceHandle::setConfiguration(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1)){
-			libusb_set_configuration(handle, stack->to<int>(1));
+			libusb_set_configuration(wrapper->handle, stack->to<int>(1));
 		}
 		return 0;
 	}
 
-	int DeviceHandle::getBOSDescriptor(State & state, libusb_device_handle * handle){
+	int DeviceHandle::getBOSDescriptor(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		BosDescriptor * iBOSDesc = OBJECT_IFACE(BosDescriptor);
 		libusb_bos_descriptor * BOSDesc = nullptr;
 		int result = 0;
-		if ((result = libusb_get_bos_descriptor(handle, &BOSDesc)) == LIBUSB_SUCCESS){
+		if ((result = libusb_get_bos_descriptor(wrapper->handle, &BOSDesc)) == LIBUSB_SUCCESS){
 			iBOSDesc->push(BOSDesc, true);
 			return 1;
 		}
@@ -60,11 +69,11 @@ namespace luausb {
 		}
 	}
 
-	int DeviceHandle::claimInterface(State & state, libusb_device_handle * handle){
+	int DeviceHandle::claimInterface(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1)){
 			int result = 0;
-			if ((result = libusb_claim_interface(handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
+			if ((result = libusb_claim_interface(wrapper->handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
 				return 1;
 			}
@@ -77,11 +86,11 @@ namespace luausb {
 		return 0;
 	}
 
-	int DeviceHandle::releaseInterface(State & state, libusb_device_handle * handle){
+	int DeviceHandle::releaseInterface(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1)){
 			int result = 0;
-			if ((result = libusb_release_interface(handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
+			if ((result = libusb_release_interface(wrapper->handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
 				return 1;
 			}
@@ -95,11 +104,11 @@ namespace luausb {
 		return 0;
 	}
 
-	int DeviceHandle::setInterfaceAltSetting(State & state, libusb_device_handle * handle){
+	int DeviceHandle::setInterfaceAltSetting(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1) && stack->is<LUA_TNUMBER>(2)){
 			int result = 0;
-			if ((result = libusb_set_interface_alt_setting(handle, stack->to<int>(1), stack->to<int>(2))) == LIBUSB_SUCCESS){
+			if ((result = libusb_set_interface_alt_setting(wrapper->handle, stack->to<int>(1), stack->to<int>(2))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
 				return 1;
 			}
@@ -112,12 +121,12 @@ namespace luausb {
 		return 0;
 	}
 
-	int DeviceHandle::clearHalt(State & state, libusb_device_handle * handle){
+	int DeviceHandle::clearHalt(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		int result = 0;
 		if (stack->is<LUA_TNUMBER>(1)){
 			int result = 0;
-			if ((result = libusb_clear_halt(handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
+			if ((result = libusb_clear_halt(wrapper->handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
 				return 1;
 			}
@@ -130,10 +139,10 @@ namespace luausb {
 		return 0;
 	}
 
-	int DeviceHandle::resetDevice(State & state, libusb_device_handle * handle){
+	int DeviceHandle::resetDevice(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		int result = 0;
-		if ((result = libusb_reset_device(handle)) == LIBUSB_SUCCESS){
+		if ((result = libusb_reset_device(wrapper->handle)) == LIBUSB_SUCCESS){
 			stack->push<bool>(true);
 			return 1;
 		}
@@ -144,12 +153,12 @@ namespace luausb {
 		}
 	}
 
-	int DeviceHandle::kernelDriverActive(State & state, libusb_device_handle * handle){
+	int DeviceHandle::kernelDriverActive(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		int result = 0;
 		if (stack->is<LUA_TNUMBER>(1)){
 			int result = 0;
-			if ((result = libusb_kernel_driver_active(handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
+			if ((result = libusb_kernel_driver_active(wrapper->handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
 				return 1;
 			}
@@ -161,11 +170,11 @@ namespace luausb {
 		}
 		return 0;
 	}
-	int DeviceHandle::detachKernelDriver(State & state, libusb_device_handle * handle){
+	int DeviceHandle::detachKernelDriver(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		int result = 0;
 		if (stack->is<LUA_TNUMBER>(1)){
-			int result = libusb_detach_kernel_driver(handle, stack->to<int>(1));
+			int result = libusb_detach_kernel_driver(wrapper->handle, stack->to<int>(1));
 			if ((result >= 0) && (result <= 1)){
 				stack->push<bool>(result == 1);
 				return 1;
@@ -178,12 +187,12 @@ namespace luausb {
 		}
 		return 0;
 	}
-	int DeviceHandle::attachKernelDriver(State & state, libusb_device_handle * handle){
+	int DeviceHandle::attachKernelDriver(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		int result = 0;
 		if (stack->is<LUA_TNUMBER>(1)){
 			int result = 0;
-			if ((result = libusb_attach_kernel_driver(handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
+			if ((result = libusb_attach_kernel_driver(wrapper->handle, stack->to<int>(1))) == LIBUSB_SUCCESS){
 				stack->push<bool>(true);
 				return 1;
 			}
@@ -195,16 +204,16 @@ namespace luausb {
 		}
 		return 0;
 	}
-	int DeviceHandle::setAutoDetachKernelDriver(State & state, libusb_device_handle * handle){
+	int DeviceHandle::setAutoDetachKernelDriver(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		int result = 0;
 		if (stack->is<LUA_TNUMBER>(1)){
-			libusb_set_auto_detach_kernel_driver(handle, stack->to<int>(1));
+			libusb_set_auto_detach_kernel_driver(wrapper->handle, stack->to<int>(1));
 		}
 		return 0;
 	}
 
-	int DeviceHandle::getDescriptor(State & state, libusb_device_handle * handle){
+	int DeviceHandle::getDescriptor(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1) && stack->is<LUA_TNUMBER>(2)){
 			size_t length = 1024;
@@ -213,7 +222,7 @@ namespace luausb {
 			}
 			char * descriptor = new char[length];
 			
-			int result = libusb_get_descriptor(handle, stack->to<int>(1), stack->to<int>(2), reinterpret_cast<unsigned char*>(descriptor), length);
+			int result = libusb_get_descriptor(wrapper->handle, stack->to<int>(1), stack->to<int>(2), reinterpret_cast<unsigned char*>(descriptor), length);
 			if (result >= 0){
 				stack->pushLString(descriptor, result);
 				delete[] descriptor;
@@ -229,7 +238,7 @@ namespace luausb {
 		return 0;
 	}
 
-	int DeviceHandle::getStringDescriptor(State & state, libusb_device_handle * handle){
+	int DeviceHandle::getStringDescriptor(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1) && stack->is<LUA_TNUMBER>(2)){
 			size_t length = 1024;
@@ -238,7 +247,7 @@ namespace luausb {
 			}
 			char * descriptor = new char[length];
 
-			int result = libusb_get_string_descriptor(handle, stack->to<int>(1), stack->to<int>(2), reinterpret_cast<unsigned char*>(descriptor), length);
+			int result = libusb_get_string_descriptor(wrapper->handle, stack->to<int>(1), stack->to<int>(2), reinterpret_cast<unsigned char*>(descriptor), length);
 			if (result >= 0){
 				stack->pushLString(descriptor, result);
 				delete[] descriptor;
@@ -254,7 +263,7 @@ namespace luausb {
 		return 0;
 	}
 
-	int DeviceHandle::getStringDescriptorASCII(State & state, libusb_device_handle * handle){
+	int DeviceHandle::getStringDescriptorASCII(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1)){
 			size_t length = 1024;
@@ -263,7 +272,7 @@ namespace luausb {
 			}
 			char * descriptor = new char[length];
 
-			int result = libusb_get_string_descriptor_ascii(handle, stack->to<int>(1), reinterpret_cast<unsigned char*>(descriptor), length);
+			int result = libusb_get_string_descriptor_ascii(wrapper->handle, stack->to<int>(1), reinterpret_cast<unsigned char*>(descriptor), length);
 			if (result >= 0){
 				stack->pushLString(descriptor, result);
 				delete[] descriptor;
@@ -279,7 +288,7 @@ namespace luausb {
 		return 0;
 	}
 
-	int DeviceHandle::controlTransfer(State & state, libusb_device_handle * handle){
+	int DeviceHandle::controlTransfer(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1) && stack->is<LUA_TNUMBER>(2) && stack->is<LUA_TNUMBER>(3) && stack->is<LUA_TNUMBER>(4) && stack->is<LUA_TSTRING>(5)){
 			const std::string data = stack->toLString(5);
@@ -287,7 +296,7 @@ namespace luausb {
 			if (stack->is<LUA_TNUMBER>(6)){
 				timeout = stack->to<int>(6);
 			}
-			int result = libusb_control_transfer(handle,
+			int result = libusb_control_transfer(wrapper->handle,
 				stack->to<int>(1),
 				stack->to<int>(2),
 				stack->to<int>(3),
@@ -308,7 +317,7 @@ namespace luausb {
 		}
 		return 0;
 	}
-	int DeviceHandle::bulkTransfer(State & state, libusb_device_handle * handle){
+	int DeviceHandle::bulkTransfer(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1) && stack->is<LUA_TSTRING>(2)){
 			const std::string data = stack->toLString(2);
@@ -317,7 +326,7 @@ namespace luausb {
 			if (stack->is<LUA_TNUMBER>(3)){
 				timeout = stack->to<int>(3);
 			}
-			int result = libusb_bulk_transfer(handle,
+			int result = libusb_bulk_transfer(wrapper->handle,
 				stack->to<int>(1),
 				reinterpret_cast<unsigned char *>(const_cast<char *>(data.c_str())),
 				data.length(),
@@ -336,7 +345,7 @@ namespace luausb {
 		}
 		return 0;
 	}
-	int DeviceHandle::interruptTransfer(State & state, libusb_device_handle * handle){
+	int DeviceHandle::interruptTransfer(State & state, DeviceHandle_wrapper * wrapper){
 		Stack * stack = state.stack;
 		if (stack->is<LUA_TNUMBER>(1) && stack->is<LUA_TSTRING>(2)){
 			const std::string data = stack->toLString(2);
@@ -345,7 +354,7 @@ namespace luausb {
 			if (stack->is<LUA_TNUMBER>(3)){
 				timeout = stack->to<int>(3);
 			}
-			int result = libusb_interrupt_transfer(handle,
+			int result = libusb_interrupt_transfer(wrapper->handle,
 				stack->to<int>(1),
 				reinterpret_cast<unsigned char *>(const_cast<char *>(data.c_str())),
 				data.length(),

@@ -4,9 +4,18 @@
 #include "common.hpp"
 
 namespace luausb {
-	class Device : public Object<libusb_device> {
+	struct Device_wrapper {
+		Device_wrapper(){
+			device = nullptr;
+			managed = false;
+		}
+		libusb_device * device;
+		bool managed;
+	};
+
+	class Device : public Object<Device_wrapper> {
 	public:
-		explicit Device(State * state) : Object<libusb_device>(state){
+		explicit Device(State * state) : Object<Device_wrapper>(state){
 			LUTOK_PROPERTY("activeConfigDescriptor", &Device::getActiveConfigDescriptor, &Device::nullMethod);
 			LUTOK_PROPERTY("configDescriptors", &Device::getConfigDescriptors, &Device::nullMethod);
 			LUTOK_PROPERTY("descriptor", &Device::getDescriptor, &Device::nullMethod);
@@ -26,26 +35,26 @@ namespace luausb {
 			LUTOK_METHOD("open", &Device::openDevice);
 		}
 
-		libusb_device * constructor(State & state, bool & managed);
+		Device_wrapper * constructor(State & state, bool & managed);
 
-		void destructor(State & state, libusb_device * object);
+		void destructor(State & state, Device_wrapper * wrapper);
 
-		int getActiveConfigDescriptor(State & state, libusb_device * object);
-		int getConfigDescriptors(State & state, libusb_device * object);
-		int getDescriptor(State & state, libusb_device * object);
-		int getDeviceSpeed(State & state, libusb_device * object);
-		int getBusNumber(State & state, libusb_device * object);
-		int getPortNumber(State & state, libusb_device * object);
-		int getDeviceAddress(State & state, libusb_device * object);
-		int getParent(State & state, libusb_device * object);
-		int getPortNumbers(State & state, libusb_device * object);
+		int getActiveConfigDescriptor(State & state, Device_wrapper * object);
+		int getConfigDescriptors(State & state, Device_wrapper * object);
+		int getDescriptor(State & state, Device_wrapper * object);
+		int getDeviceSpeed(State & state, Device_wrapper * object);
+		int getBusNumber(State & state, Device_wrapper * object);
+		int getPortNumber(State & state, Device_wrapper * object);
+		int getDeviceAddress(State & state, Device_wrapper * object);
+		int getParent(State & state, Device_wrapper * object);
+		int getPortNumbers(State & state, Device_wrapper * object);
 
-		int getConfigDescriptor(State & state, libusb_device * object);
-		int getConfigDescriptorByValue(State & state, libusb_device * object);
+		int getConfigDescriptor(State & state, Device_wrapper * object);
+		int getConfigDescriptorByValue(State & state, Device_wrapper * object);
 
-		int getMaxPacketSize(State & state, libusb_device * object);
-		int getMaxISOPacketSize(State & state, libusb_device * object);
-		int openDevice(State & state, libusb_device * object);
+		int getMaxPacketSize(State & state, Device_wrapper * object);
+		int getMaxISOPacketSize(State & state, Device_wrapper * object);
+		int openDevice(State & state, Device_wrapper * object);
 	};
 };
 

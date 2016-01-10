@@ -105,7 +105,10 @@ namespace luausb {
 	int Transfer::getDeviceHandle(State & state, libusb_transfer * transfer){
 		Stack * stack = state.stack;
 		DeviceHandle * iDeviceHandle = OBJECT_IFACE(DeviceHandle);
-		iDeviceHandle->push(transfer->dev_handle);
+		DeviceHandle_wrapper * wrapper = new DeviceHandle_wrapper;
+		wrapper->handle = transfer->dev_handle;
+		wrapper->managed = false;
+		iDeviceHandle->push(wrapper, true);
 		return 1;
 	}
 	int Transfer::getFlags(State & state, libusb_transfer * transfer){
@@ -279,7 +282,8 @@ namespace luausb {
 	int Transfer::fillControlTransfer(State & state, libusb_transfer * transfer){
 		Stack * stack = state.stack;
 		DeviceHandle * iDeviceHandle = OBJECT_IFACE(DeviceHandle);
-		libusb_device_handle * devHandle = iDeviceHandle->get(1);
+		DeviceHandle_wrapper * devHandle = iDeviceHandle->get(1);
+
 		if (devHandle && stack->is<LUA_TFUNCTION>(3)){
 			unsigned int timeout = 0;
 			unsigned char * newBuffer = nullptr;
@@ -296,7 +300,7 @@ namespace luausb {
 				newBuffer = transfer->buffer;
 			}
 
-			libusb_fill_control_transfer(transfer, devHandle, newBuffer, &this->transferCallback, transfer->user_data, timeout);
+			libusb_fill_control_transfer(transfer, devHandle->handle, newBuffer, &this->transferCallback, transfer->user_data, timeout);
 		}
 		return 0;
 	}
@@ -307,7 +311,7 @@ namespace luausb {
 	int Transfer::fillBulkTransfer(State & state, libusb_transfer * transfer){
 		Stack * stack = state.stack;
 		DeviceHandle * iDeviceHandle = OBJECT_IFACE(DeviceHandle);
-		libusb_device_handle * devHandle = iDeviceHandle->get(1);
+		DeviceHandle_wrapper * devHandle = iDeviceHandle->get(1);
 		if (devHandle && stack->is<LUA_TNUMBER>(2) && stack->is<LUA_TFUNCTION>(5)){
 			unsigned int timeout = 0;
 			unsigned char * newBuffer = nullptr;
@@ -335,7 +339,7 @@ namespace luausb {
 				newBuffer = transfer->buffer;
 			}
 
-			libusb_fill_bulk_transfer(transfer, devHandle, endpoint, newBuffer, length, &this->transferCallback, transfer->user_data, timeout);
+			libusb_fill_bulk_transfer(transfer, devHandle->handle, endpoint, newBuffer, length, &this->transferCallback, transfer->user_data, timeout);
 		}
 		return 0;
 	}
@@ -346,7 +350,7 @@ namespace luausb {
 	int Transfer::fillBulkStreamTransfer(State & state, libusb_transfer * transfer){
 		Stack * stack = state.stack;
 		DeviceHandle * iDeviceHandle = OBJECT_IFACE(DeviceHandle);
-		libusb_device_handle * devHandle = iDeviceHandle->get(1);
+		DeviceHandle_wrapper * devHandle = iDeviceHandle->get(1);
 		if (devHandle && stack->is<LUA_TNUMBER>(2) && stack->is<LUA_TNUMBER>(3) && stack->is<LUA_TFUNCTION>(6)){
 			unsigned int timeout = 0;
 			unsigned char * newBuffer = nullptr;
@@ -375,7 +379,7 @@ namespace luausb {
 				newBuffer = transfer->buffer;
 			}
 
-			libusb_fill_bulk_stream_transfer(transfer, devHandle, endpoint, streamID, newBuffer, length, &this->transferCallback, transfer->user_data, timeout);
+			libusb_fill_bulk_stream_transfer(transfer, devHandle->handle, endpoint, streamID, newBuffer, length, &this->transferCallback, transfer->user_data, timeout);
 		}
 		return 0;
 	}
@@ -386,7 +390,7 @@ namespace luausb {
 	int Transfer::fillInterruptTransfer(State & state, libusb_transfer * transfer){
 		Stack * stack = state.stack;
 		DeviceHandle * iDeviceHandle = OBJECT_IFACE(DeviceHandle);
-		libusb_device_handle * devHandle = iDeviceHandle->get(1);
+		DeviceHandle_wrapper * devHandle = iDeviceHandle->get(1);
 		if (devHandle && stack->is<LUA_TNUMBER>(2) && stack->is<LUA_TFUNCTION>(5)){
 			unsigned int timeout = 0;
 			unsigned char * newBuffer = nullptr;
@@ -414,7 +418,7 @@ namespace luausb {
 				newBuffer = transfer->buffer;
 			}
 
-			libusb_fill_interrupt_transfer(transfer, devHandle, endpoint, newBuffer, length, &this->transferCallback, transfer->user_data, timeout);
+			libusb_fill_interrupt_transfer(transfer, devHandle->handle, endpoint, newBuffer, length, &this->transferCallback, transfer->user_data, timeout);
 		}
 		return 0;
 	}
@@ -425,7 +429,7 @@ namespace luausb {
 	int Transfer::fillISOTransfer(State & state, libusb_transfer * transfer){
 		Stack * stack = state.stack;
 		DeviceHandle * iDeviceHandle = OBJECT_IFACE(DeviceHandle);
-		libusb_device_handle * devHandle = iDeviceHandle->get(1);
+		DeviceHandle_wrapper * devHandle = iDeviceHandle->get(1);
 		if (devHandle && stack->is<LUA_TNUMBER>(2) && stack->is<LUA_TNUMBER>(5) && stack->is<LUA_TFUNCTION>(6)){
 			unsigned int timeout = 0;
 			unsigned char * newBuffer = nullptr;
@@ -454,7 +458,7 @@ namespace luausb {
 				newBuffer = transfer->buffer;
 			}
 
-			libusb_fill_iso_transfer(transfer, devHandle, endpoint, newBuffer, length, numISOPackets, &this->transferCallback, transfer->user_data, timeout);
+			libusb_fill_iso_transfer(transfer, devHandle->handle, endpoint, newBuffer, length, numISOPackets, &this->transferCallback, transfer->user_data, timeout);
 		}
 		return 0;
 	}
