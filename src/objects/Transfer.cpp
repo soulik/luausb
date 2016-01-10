@@ -2,6 +2,7 @@
 #include "objects/ControlSetup.hpp"
 #include "objects/DeviceHandle.hpp"
 #include "objects/ISOPacketDescriptor.hpp"
+#include <string.h>
 
 namespace luausb {
 	libusb_transfer * Transfer::constructor(State & state, bool & managed){
