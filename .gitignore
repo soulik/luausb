@@ -8,3 +8,6 @@
 build/*
 tests/*.txt
 tests/*.log
+tests/*.so
+tests/*.dll
+tests/*.exe
