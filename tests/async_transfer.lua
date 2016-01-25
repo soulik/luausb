@@ -1,9 +1,4 @@
-local utils = require 'utils/time'
-require 'utils/hexdump'
-
 local usb = require 'luausb'
-local sleep = utils.sleep
-local bit = require 'bit'
 
 local function USB_assert(...)
 	local result = select(1, ...)
