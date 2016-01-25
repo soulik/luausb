@@ -224,7 +224,7 @@ namespace luausb {
 			
 			int result = libusb_get_descriptor(wrapper->handle, stack->to<int>(1), stack->to<int>(2), reinterpret_cast<unsigned char*>(descriptor), length);
 			if (result >= 0){
-				stack->pushLString(descriptor, result);
+				stack->pushLString(std::string(descriptor, result));
 				delete[] descriptor;
 				return 1;
 			}
@@ -249,7 +249,7 @@ namespace luausb {
 
 			int result = libusb_get_string_descriptor(wrapper->handle, stack->to<int>(1), stack->to<int>(2), reinterpret_cast<unsigned char*>(descriptor), length);
 			if (result >= 0){
-				stack->pushLString(descriptor, result);
+				stack->pushLString(std::string(descriptor, result));
 				delete[] descriptor;
 				return 1;
 			}
@@ -274,7 +274,7 @@ namespace luausb {
 
 			int result = libusb_get_string_descriptor_ascii(wrapper->handle, stack->to<int>(1), reinterpret_cast<unsigned char*>(descriptor), length);
 			if (result >= 0){
-				stack->pushLString(descriptor, result);
+				stack->pushLString(std::string(descriptor, result));
 				delete[] descriptor;
 				return 1;
 			}

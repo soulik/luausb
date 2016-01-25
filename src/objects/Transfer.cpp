@@ -149,8 +149,7 @@ namespace luausb {
 	}
 	int Transfer::getBuffer(State & state, libusb_transfer * transfer){
 		Stack * stack = state.stack;
-		const std::string buffer = std::string(reinterpret_cast<char*>(transfer->buffer), transfer->length);
-		stack->pushLString(buffer, transfer->length);
+		stack->pushLString(std::string(reinterpret_cast<char*>(transfer->buffer), transfer->length));
 		return 1;
 	}
 	int Transfer::getNumISOPackets(State & state, libusb_transfer * transfer){
@@ -249,7 +248,7 @@ namespace luausb {
 			}
 
 			libusb_fill_control_setup(buffer, stack->to<int>(1), stack->to<int>(2), stack->to<int>(3), stack->to<int>(4), length);
-			stack->pushLString(reinterpret_cast<char*>(buffer), bufferLength);
+			stack->pushLString(std::string(reinterpret_cast<char*>(buffer), bufferLength));
 			delete[] buffer;
 			return 1;
 		}
@@ -270,7 +269,7 @@ namespace luausb {
 			char * out = new char[bufferLength];
 			memcpy(out, buffer.c_str(), LIBUSB_CONTROL_SETUP_SIZE);
 			memcpy(out + LIBUSB_CONTROL_SETUP_SIZE, data.c_str(), (dataLength > maxLength) ? maxLength : dataLength);
-			stack->pushLString(out, bufferLength);
+			stack->pushLString(std::string(out, bufferLength));
 			delete[] out;
 			return 1;
 		}
@@ -480,7 +479,7 @@ namespace luausb {
 
 	int Transfer::getControlTransferData(State & state, libusb_transfer * transfer){
 		Stack * stack = state.stack;
-		stack->pushLString(reinterpret_cast<char*>(libusb_control_transfer_get_data(transfer)), transfer->actual_length);
+		stack->pushLString(std::string(reinterpret_cast<char*>(libusb_control_transfer_get_data(transfer)), transfer->actual_length));
 		return 1;
 	}
 	int Transfer::setControlTransferData(State & state, libusb_transfer * transfer){
@@ -492,6 +491,7 @@ namespace luausb {
 				reallocBuffer(state, transfer, newLength + LIBUSB_CONTROL_SETUP_SIZE, true);
 			}
 			memcpy(transfer->buffer + LIBUSB_CONTROL_SETUP_SIZE, data.c_str(), newLength);
+			transfer->actual_length = newLength;
 		}
 		return 0;
 	}

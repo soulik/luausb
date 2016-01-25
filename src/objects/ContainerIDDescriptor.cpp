@@ -31,7 +31,7 @@ namespace luausb {
 		Stack * stack = state.stack;
 		size_t length = 16;
 		const std::string data = std::string(reinterpret_cast<char*>(descriptor->ContainerID), length);
-		stack->pushLString(data, length);
+		stack->pushLString(std::string(data, length));
 		return 1;
 	}
 

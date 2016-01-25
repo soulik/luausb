@@ -68,6 +68,154 @@ namespace luausb {
 		return 0;
 	}
 
+	bool fillTimeval(State & state, timeval & tv, int index){
+		Stack * stack = state.stack;
+		if (stack->is<LUA_TNUMBER>(index)){
+			tv.tv_sec = stack->to<int>(index);
+			tv.tv_usec = 0;
+			return true;
+		}
+		else if (stack->is<LUA_TTABLE>(index)){
+			stack->getField("sec", index);
+			if (stack->is<LUA_TNUMBER>(-1)){
+				tv.tv_sec = stack->to<int>(-1);
+			}
+			else{
+				tv.tv_sec = 0;
+			}
+			stack->pop(1);
+
+			stack->getField("usec", index);
+			if (stack->is<LUA_TNUMBER>(-1)){
+				tv.tv_usec = stack->to<int>(-1);
+			}
+			else{
+				tv.tv_usec = 0;
+			}
+			stack->pop(1);
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
+	int Context::handleEvents(State & state, Context_wrapper * wrapper){
+		Stack * stack = state.stack;
+		int result = 0;
+		
+		timeval tv;
+		bool timeValSet = fillTimeval(state, tv, 1);
+		int completed;
+		if (stack->is<LUA_TBOOLEAN>(2)){
+			completed = (stack->to<bool>(2)) ? 1 : 0;
+		}
+		else{
+			completed = -1;
+		}
+
+		if (timeValSet){
+			if (completed >= 0){
+				result = libusb_handle_events_timeout_completed(wrapper->context, &tv, &completed);
+			}
+			else{
+				result = libusb_handle_events_timeout(wrapper->context, &tv);
+			}
+		}
+		else{
+			if (completed >= 0){
+				result = libusb_handle_events_completed(wrapper->context, &completed);
+			}
+			else{
+				result = libusb_handle_events(wrapper->context);
+			}
+		}
+
+		if (result == LIBUSB_SUCCESS){
+			stack->push<bool>(true);
+			return 1;
+		}
+		else{
+			stack->push<bool>(false);
+			stack->push<int>(result);
+			return 2;
+		}
+	}
+
+	int Context::tryLockEvents(State & state, Context_wrapper * wrapper){
+		Stack * stack = state.stack;
+		int result = 0;
+		result = libusb_try_lock_events(wrapper->context);
+		if (result == LIBUSB_SUCCESS){
+			stack->push<bool>(true);
+			return 1;
+		}
+		else{
+			stack->push<bool>(false);
+			stack->push<int>(result);
+			return 2;
+		}
+	}
+	int Context::lockEvents(State & state, Context_wrapper * wrapper){
+		Stack * stack = state.stack;
+		libusb_lock_events(wrapper->context);
+		stack->push<bool>(true);
+		return 1;
+	}
+	int Context::unlockEvents(State & state, Context_wrapper * wrapper){
+		Stack * stack = state.stack;
+		libusb_unlock_events(wrapper->context);
+		stack->push<bool>(true);
+		return 1;
+	}
+	int Context::lockEventWaiters(State & state, Context_wrapper * wrapper){
+		Stack * stack = state.stack;
+		libusb_lock_event_waiters(wrapper->context);
+		stack->push<bool>(true);
+		return 1;
+	}
+	int Context::unlockEventWaiters(State & state, Context_wrapper * wrapper){
+		Stack * stack = state.stack;
+		libusb_unlock_event_waiters(wrapper->context);
+		stack->push<bool>(true);
+		return 1;
+	}
+	int Context::waitForEvent(State & state, Context_wrapper * wrapper){
+		Stack * stack = state.stack;
+		int result = 0;
+		timeval tv;
+		if (fillTimeval(state, tv, 1)){
+			result = libusb_wait_for_event(wrapper->context, &tv);
+			if (result == LIBUSB_SUCCESS){
+				stack->push<bool>(true);
+				return 1;
+			}
+			else{
+				stack->push<bool>(false);
+				stack->push<int>(result);
+				return 2;
+			}
+		}
+		else{
+			return 0;
+		}
+	}
+	int Context::eventHandlingOK(State & state, Context_wrapper * wrapper){
+		Stack * stack = state.stack;
+		int result = 0;
+		result = libusb_event_handling_ok(wrapper->context);
+		stack->push<bool>(result == 1);
+		return 1;
+	}
+	int Context::eventHandlerActive(State & state, Context_wrapper * wrapper){
+		Stack * stack = state.stack;
+		int result = 0;
+		result = libusb_event_handler_active(wrapper->context);
+		stack->push<bool>(result == 1);
+		return 1;
+	}
+
+
 	void initContext(State * state, Module & module){
 		INIT_OBJECT(Context);
 	}
